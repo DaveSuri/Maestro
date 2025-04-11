@@ -1,0 +1,66 @@
+// server.js (or routes/classes.js)
+const express = require('express');
+const app = express();
+const port = 3000;
+
+// --- Middleware ---
+app.use(express.json()); // To parse JSON request bodies
+
+// --- Mock Database Interaction ---
+// In a real app, this would interact with PostgreSQL, MongoDB, etc.
+const mockDatabase = {
+  classes: [
+    { id: 1, name: 'Guitar Basics', level: 'Beginner', startTime: '2025-04-08T18:00:00Z', instructorName: 'Priya S.', spotsAvailable: 5, instrument: 'Guitar' },
+    { id: 2, name: 'Piano Chords', level: 'Intermediate', startTime: '2025-04-08T19:00:00Z', instructorName: 'Amit K.', spotsAvailable: 3, instrument: 'Piano' },
+    { id: 3, name: 'Advanced Guitar Solos', level: 'Advanced', startTime: '2025-04-08T20:00:00Z', instructorName: 'Priya S.', spotsAvailable: 2, instrument: 'Guitar' },
+  ],
+  // ... other data like users, bookings, etc.
+};
+
+// --- API Routes ---
+// GET /classes - Fetches classes, supports filtering via query parameters
+app.get('/classes', (req, res) => {
+  console.log("Fetching classes with query:", req.query);
+  let filteredClasses = mockDatabase.classes;
+
+  // Example filtering (add more robust filtering/validation)
+  if (req.query.instrument) {
+    filteredClasses = filteredClasses.filter(c => c.instrument === req.query.instrument);
+  }
+  if (req.query.level) {
+    filteredClasses = filteredClasses.filter(c => c.level === req.query.level);
+  }
+  // Add filtering by date, center, etc.
+
+  res.status(200).json(filteredClasses);
+});
+
+// POST /bookings - Example of creating a booking (highly simplified)
+app.post('/bookings', (req, res) => {
+    // --- Authentication/Authorization check would go here ---
+    // Check if user has valid subscription
+
+    const { userId, classId } = req.body;
+    if (!userId || !classId) {
+        return res.status(400).json({ message: 'User ID and Class ID are required.' });
+    }
+
+    // --- Check class availability, user eligibility etc. ---
+    const classToBook = mockDatabase.classes.find(c => c.id === classId);
+    if (!classToBook || classToBook.spotsAvailable <= 0) {
+        return res.status(400).json({ message: 'Class not available or fully booked.' });
+    }
+
+    // --- Create booking in DB, decrease spots available etc. ---
+    console.log(`Booking class ${classId} for user ${userId}`);
+    // In real app: Update DB state
+    classToBook.spotsAvailable--; // Example update
+
+    res.status(201).json({ message: 'Booking successful!', bookingId: Math.random().toString(36).substring(7) }); // Send back a mock booking ID
+});
+
+
+// --- Start Server ---
+app.listen(port, () => {
+  console.log(`MAESTRO API listening at http://localhost:${port}`);
+});
